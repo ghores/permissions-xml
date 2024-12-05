@@ -1,85 +1,60 @@
 package project.activity;
 
 import android.Manifest;
-import android.content.DialogInterface;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
-
+import android.widget.Toast;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-
 import com.example.permissions.R;
-
 import java.io.File;
+import project.helper.RequestHelper;
 
 public class MainActivity extends AppCompatActivity {
-
-    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        Log.i(TAG, "permission : " + permission);
-        if (permission == PackageManager.PERMISSION_DENIED) {
-            String[] permissions = {
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-            };
-            askUserForPermission(permissions, 100);
-            String[] permissions2 = {
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-            };
-            askUserForPermission(permissions2, 101);
-        }
+        requestForWriteSDCardPermission();
+        requestForReceiveSMSPermission();
     }
 
-    private void askUserForPermission(String[] permissions, int requestCode) {
-        ActivityCompat.requestPermissions(this, permissions, requestCode);
+    private void requestForWriteSDCardPermission() {
+        RequestHelper requestHelper = new RequestHelper(this);
+        requestHelper.request(Manifest.permission.WRITE_EXTERNAL_STORAGE, new RequestHelper.OnGrantedListener() {
+            @Override
+            public void onGranted() {
+                Toast.makeText(MainActivity.this, "Granted for write external storage", Toast.LENGTH_SHORT).show();
+            }
+        }, new RequestHelper.OnDeniedListener() {
+            @Override
+            public void onDenied() {
+                Toast.makeText(MainActivity.this, "Denied for write external storage", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void requestForReceiveSMSPermission() {
+        RequestHelper requestHelper = new RequestHelper(this);
+        requestHelper.request(Manifest.permission.RECEIVE_SMS, new RequestHelper.OnGrantedListener() {
+            @Override
+            public void onGranted() {
+                Toast.makeText(MainActivity.this, "Granted for receive sms", Toast.LENGTH_SHORT).show();
+            }
+        }, new RequestHelper.OnDeniedListener() {
+            @Override
+            public void onDenied() {
+                Toast.makeText(MainActivity.this, "Denied for receive sms", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == 100) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.i(TAG, "Write Access to SDCARD granted");
-                createAppDir();
-            } else {
-                new AlertDialog.Builder(this)
-                        .setTitle("Permission Required")
-                        .setMessage("Write Access to SDCARD required for app")
-                        .setPositiveButton("Ask me again", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                //askUserForPermission();
-                            }
-                        })
-                        .create()
-                        .show();
-            }
-        } else if (requestCode == 101) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.i(TAG, "Read Access to SDCARD granted");
-                createAppDir();
-            } else {
-                new AlertDialog.Builder(this)
-                        .setTitle("Permission Required")
-                        .setMessage("Read Access to SDCARD required for app")
-                        .setPositiveButton("Ask me again", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                //askUserForPermission();
-                            }
-                        })
-                        .create()
-                        .show();
-            }
-        }
+        RequestHelper.onRequestPermissionResult(requestCode, permissions, grantResults);
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
@@ -88,9 +63,9 @@ public class MainActivity extends AppCompatActivity {
         File file = new File(dirName);
         boolean wasCreated = file.mkdirs();
         if (wasCreated) {
-            Log.i(TAG, "Yes");
+            Log.i("LOG", "Yes");
         } else {
-            Log.i(TAG, "No");
+            Log.i("LOG", "No");
         }
     }
 }
